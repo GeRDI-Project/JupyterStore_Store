@@ -91,13 +91,16 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
 
     @Override
     protected boolean copyFile(final JupyterCredentials creds, final String targetDir, final ResearchDataInputStream taskElement) {
-        File target = new File(creds.getPersistentVolumePath().getAbsolutePath() + targetDir + taskElement.getName());
+        int lastIndex = taskElement.getName().lastIndexOf("/");
+        String targetFileName = lastIndex != 0 ? taskElement.getName().substring(lastIndex) : taskElement.getName();
+        File target = new File(creds.getPersistentVolumePath().getAbsolutePath() + targetDir + targetFileName);
         if (target.exists()) {
             taskElement.setStatus(CopyStatus.ERROR);
         }
         new Thread(() -> {
             try {
                 Files.copy(taskElement, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                taskElement.setStatus(CopyStatus.FINISHED);
             } catch (IOException e) {
                 LOGGER.error("Could not copy data.", e);
                 taskElement.setStatus(CopyStatus.ERROR);
@@ -109,8 +112,9 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
     @Override
     protected List<ListElement> listFiles(final String directory, final JupyterCredentials creds) {
         List<ListElement> retVal = new ArrayList<>();
-        // TODO: Construct correct Path
         File path = new File(creds.getPersistentVolumePath().getAbsolutePath() + directory);
+        LOGGER.info("Retrieving files from " + path.getAbsolutePath());
+        if (path.listFiles() == null) LOGGER.error("Path returns null list. " + path.getAbsolutePath());
         for (File it: path.listFiles()) {
             String type;
             try {
@@ -122,7 +126,7 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
 
             retVal.add(ListElement.of(it.getName(), type, it.getAbsolutePath().replace(creds.getPersistentVolumePath().getAbsolutePath(), "")));
         }
-        return null;
+        return retVal;
     }
 
     /**
@@ -135,7 +139,7 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
         V1PersistentVolumeClaimList list = k8sApi.listNamespacedPersistentVolumeClaim("jhub",null, null, null,null,null,null,null,null,null);
         for (V1PersistentVolumeClaim item : list.getItems()) {
             final String claimUsername = item.getMetadata().getAnnotations().get("hub.jupyter.org/username");
-            if (claimUsername.equals(username)) {
+            if (claimUsername != null && claimUsername.equals(username)) {
                 String volumeName = item.getSpec().getVolumeName();
                 retVal = new File("/mnt/nfs/nfs-test/jhub-claim-" + username + "-" + volumeName);
                 break;
@@ -145,8 +149,9 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
     }
 
     private final File createPersistentVolumeClaim(String username) throws ApiException {
-        k8sApi.createNamespacedPersistentVolumeClaim("jhub",new JHubPersistentVolumeClaim(username), null);
-        return null;
+        V1PersistentVolumeClaim createdClaim = k8sApi.createNamespacedPersistentVolumeClaim("jhub",new JHubPersistentVolumeClaim(username), null);
+        String volumeName = createdClaim.getSpec().getVolumeName();
+        return new File("/mnt/nfs/nfs-test/jhub-claim-" + username + "-" + volumeName);
     }
 
 }

@@ -18,3 +18,14 @@ dependencies {
     compile 'de.gerdi-project.store:store-service-library:0.3.0'
     compile 'org.projectlombok:lombok:1.18.2'
 }
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'JupyterHub Store Service',
+                'Main-Class': 'de.gerdiproject.store.jupyterhub.JupyterStoreService'
+    }
+    doFirst {
+        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+}
