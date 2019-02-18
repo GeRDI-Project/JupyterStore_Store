@@ -60,31 +60,50 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
     @Override
     protected JupyterCredentials login(final Request req, final Response res) {
         String username = req.cookie("username");
+        boolean wait = req.queryParams("wait") != null;
+        LOGGER.info("Wait set to " + wait);
         if (username == null) {
             res.status(400);
             return null;
         }
+        username = username.toLowerCase(); // K8S only supports lowercase
         File target = null;
-        try {
-            target = getPersistentVolumeClaim(username);
-        } catch (ApiException e) {
-            LOGGER.error("Could not connect to Kubernetes API Server.", e);
-            res.status(500);
-            return null;
-        }
-
-        if (target == null) {
+        int counter = 0;
+        while (target == null && (counter < 4 || wait)) {
             try {
-                target = createPersistentVolumeClaim(username);
+                target = getPersistentVolumeClaim(username);
             } catch (ApiException e) {
-                LOGGER.error("Could not create PersitentVolumeClaim.", e);
+                LOGGER.error("Could not connect to Kubernetes API Server.", e);
                 res.status(500);
                 return null;
             }
+
+            if (target == null && counter == 0) {
+                try {
+                    createPersistentVolumeClaim(username);
+                } catch (ApiException e) {
+                    LOGGER.error("Could not create PersistentVolumeClaim.", e);
+                    res.status(500);
+                    return null;
+                }
+            }
+            if (target == null) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    LOGGER.error("Sleep interrupted", e);
+                }
+            }
+            counter++;
+        }
+        if (target != null) {
+            LOGGER.info("Target " + target.getPath());
         }
         JupyterCredentials creds = new JupyterCredentials();
         creds.setUsername(username);
         creds.setPersistentVolumePath(target);
+
+        if (target == null) creds = null;
 
         return creds;
     }
@@ -141,6 +160,7 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
             final String claimUsername = item.getMetadata().getAnnotations().get("hub.jupyter.org/username");
             if (claimUsername != null && claimUsername.equals(username)) {
                 String volumeName = item.getSpec().getVolumeName();
+                if (volumeName == null) break;
                 retVal = new File("/mnt/nfs/nfs-test/jhub-claim-" + username + "-" + volumeName);
                 break;
             }
@@ -148,10 +168,8 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
         return retVal;
     }
 
-    private final File createPersistentVolumeClaim(String username) throws ApiException {
+    private final void createPersistentVolumeClaim(String username) throws ApiException {
         V1PersistentVolumeClaim createdClaim = k8sApi.createNamespacedPersistentVolumeClaim("jhub",new JHubPersistentVolumeClaim(username), null);
-        String volumeName = createdClaim.getSpec().getVolumeName();
-        return new File("/mnt/nfs/nfs-test/jhub-claim-" + username + "-" + volumeName);
     }
 
 }
