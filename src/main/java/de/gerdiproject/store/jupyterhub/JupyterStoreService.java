@@ -148,6 +148,13 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
         return retVal;
     }
 
+    @Override
+    protected boolean createDir(String dir, final String dirName, final JupyterCredentials creds) {
+        final File mountPath = creds.getPersistentVolumePath();
+        if (dir.endsWith("/")) dir = dir.substring(0, dir.length()-1);
+        return new File(mountPath + dir + "/" + dirName).mkdir();
+    }
+
     /**
      *
      * @param username
