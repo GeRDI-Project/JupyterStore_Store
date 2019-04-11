@@ -28,6 +28,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This represents the logic for the backend of the Jupyter Hub Store service
+ */
 public class JupyterStoreService extends AbstractStoreService<JupyterCredentials> {
 
     private static final Logger LOGGER = LoggerFactory
@@ -156,9 +159,10 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
     }
 
     /**
+     * Retrieves the directory used for the Kubernetes PersistentVolumeClaim
      *
-     * @param username
-     * @return or null if volume does not exist.
+     * @param username The username linked to the PersistentVolumeClaim
+     * @return A File instance pointing to the directory or null if volume does not exist.
      */
     private final File getPersistentVolumeClaim(String username) throws ApiException {
         File retVal = null;
@@ -175,6 +179,12 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
         return retVal;
     }
 
+    /**
+     * Creates a PersistentVolumeClaim in Kubernetes for a given user
+     *
+     * @param username The user for whom the Claim should be created
+     * @throws ApiException
+     */
     private final void createPersistentVolumeClaim(String username) throws ApiException {
         V1PersistentVolumeClaim createdClaim = k8sApi.createNamespacedPersistentVolumeClaim("jhub",new JHubPersistentVolumeClaim(username), null);
     }

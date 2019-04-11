@@ -6,6 +6,9 @@ import org.apache.commons.lang.RandomStringUtils;
 
 import java.io.File;
 
+/**
+ * This represents the credentials needed to provide this service
+ */
 public  @Data
 class JupyterCredentials implements ICredentials {
 

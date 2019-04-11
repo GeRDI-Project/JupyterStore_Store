@@ -11,8 +11,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This represents an abstract PersistentVolumeClaim which can be used to create a Claim compatible with JupyterHub
+ */
 public class JHubPersistentVolumeClaim extends V1PersistentVolumeClaim {
 
+    /**
+     * Constructor to create the Claim
+     * @param username The user's name
+     */
     public JHubPersistentVolumeClaim(String username) {
         this.setMetadata(this.createMetadata(username));
         this.setSpec(this.createSpec());
