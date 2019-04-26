@@ -61,8 +61,8 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
     }
 
     @Override
-    protected JupyterCredentials login(final Request req, final Response res) {
-        String username = req.cookie("username");
+    protected JupyterCredentials login(final String userId, final Request req, final Response res) {
+        String username = userId;
         boolean wait = req.queryParams("wait") != null;
         LOGGER.info("Wait set to " + wait);
         if (username == null) {
@@ -172,7 +172,7 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
             if (claimUsername != null && claimUsername.equals(username)) {
                 String volumeName = item.getSpec().getVolumeName();
                 if (volumeName == null) break;
-                retVal = new File("/mnt/nfs/nfs-test/jhub-claim-" + username + "-" + volumeName);
+                retVal = new File("/local/persistent-volumes/jhub-claim-" + username + "-" + volumeName);
                 break;
             }
         }
