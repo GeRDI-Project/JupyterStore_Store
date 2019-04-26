@@ -1,8 +1,22 @@
+/**
+ * Copyright © 2019 Nelson Tavares de Sousa (tavaresdesousa@email.uni-kiel.de)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.gerdiproject.store.jupyterhub;
 
 import de.gerdiproject.store.AbstractStoreService;
 import de.gerdiproject.store.datamodel.CopyStatus;
-import de.gerdiproject.store.datamodel.ICredentials;
 import de.gerdiproject.store.datamodel.ListElement;
 import de.gerdiproject.store.datamodel.ResearchDataInputStream;
 import de.gerdiproject.store.jupyterhub.models.JHubPersistentVolumeClaim;
@@ -20,8 +34,6 @@ import spark.Request;
 import spark.Response;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -30,6 +42,8 @@ import java.util.List;
 
 /**
  * This represents the logic for the backend of the Jupyter Hub Store service
+ *
+ * @author Nelson Tavares de Sousa
  */
 public class JupyterStoreService extends AbstractStoreService<JupyterCredentials> {
 
