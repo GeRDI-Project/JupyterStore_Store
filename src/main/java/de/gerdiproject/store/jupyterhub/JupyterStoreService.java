@@ -84,6 +84,7 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
             return null;
         }
         username = username.toLowerCase(); // K8S only supports lowercase
+        username = username.replaceAll("-", "-2d");
         File target = null;
         int counter = 0;
         while (target == null && (counter < 4 || wait)) {
