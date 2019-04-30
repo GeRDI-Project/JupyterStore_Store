@@ -76,14 +76,9 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
 
     @Override
     protected JupyterCredentials login(final String userId, final Request req, final Response res) {
-        String username = userId;
+        String username = userId.toLowerCase();
         boolean wait = req.queryParams("wait") != null;
         LOGGER.info("Wait set to " + wait);
-        if (username == null) {
-            res.status(400);
-            return null;
-        }
-        username = username.toLowerCase(); // K8S only supports lowercase
         File target = null;
         int counter = 0;
         while (target == null && (counter < 4 || wait)) {
