@@ -49,6 +49,7 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(JupyterStoreService.class);
+    public static final String PERSISTENT_VOL_DIR = "/local/persistent-volumes/jhub-claim-%s-%s";
 
     private final CoreV1Api k8sApi;
 
@@ -76,9 +77,10 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
 
     @Override
     protected JupyterCredentials login(final String userId, final Request req, final Response res) {
-        String username = userId.toLowerCase();
+        String username = userId.toLowerCase().replaceAll("-", "-2d");
         boolean wait = req.queryParams("wait") != null;
         LOGGER.info("Wait set to " + wait);
+
         File target = null;
         int counter = 0;
         while (target == null && (counter < 4 || wait)) {
@@ -181,7 +183,7 @@ public class JupyterStoreService extends AbstractStoreService<JupyterCredentials
             if (claimUsername != null && claimUsername.equals(username)) {
                 String volumeName = item.getSpec().getVolumeName();
                 if (volumeName == null) break;
-                retVal = new File("/local/persistent-volumes/jhub-claim-" + username + "-" + volumeName);
+                retVal = new File(String.format(PERSISTENT_VOL_DIR, username, volumeName));
                 break;
             }
         }
